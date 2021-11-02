@@ -38,8 +38,7 @@ void set_module_sig_enforced(void)
 }
 
 /**
- * verify_appended_signature - Verify the signature on a module with the
- * signature marker stripped.
+ * verify_appended_signature - Verify the signature on a module
  * @data: The data to be verified
  * @len: Size of @data.
  * @trusted_keys: Keyring to use for verification
@@ -48,11 +47,20 @@ void set_module_sig_enforced(void)
 int verify_appended_signature(const void *data, unsigned long *len,
 			      struct key *trusted_keys, const char *what)
 {
+	const unsigned long markerlen = sizeof(MODULE_SIG_STRING) - 1;
 	const struct module_signature *ms;
 	unsigned long sig_len, modlen = *len;
 	int ret;
 
 	pr_devel("==>%s(,%lu)\n", __func__, modlen);
+
+	if (markerlen > modlen)
+		return -ENODATA;
+
+	if (memcmp(data + modlen - markerlen, MODULE_SIG_STRING,
+		   markerlen))
+		return -ENODATA;
+	modlen -= markerlen;
 
 	if (modlen <= sizeof(*ms))
 		return -EBADMSG;
@@ -76,7 +84,6 @@ int verify_appended_signature(const void *data, unsigned long *len,
 int module_sig_check(struct load_info *info, int flags)
 {
 	int err = -ENODATA;
-	const unsigned long markerlen = sizeof(MODULE_SIG_STRING) - 1;
 	const char *reason;
 	const void *mod = info->hdr;
 	bool mangled_module = flags & (MODULE_INIT_IGNORE_MODVERSIONS |
@@ -85,11 +92,7 @@ int module_sig_check(struct load_info *info, int flags)
 	 * Do not allow mangled modules as a module with version information
 	 * removed is no longer the module that was signed.
 	 */
-	if (!mangled_module &&
-	    info->len > markerlen &&
-	    memcmp(mod + info->len - markerlen, MODULE_SIG_STRING, markerlen) == 0) {
-		/* We truncate the module to discard the signature */
-		info->len -= markerlen;
+	if (!mangled_module) {
 		err = verify_appended_signature(mod, &info->len,
 						VERIFY_USE_SECONDARY_KEYRING, "module");
 		if (!err) {
