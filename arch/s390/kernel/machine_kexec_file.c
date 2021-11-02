@@ -29,8 +29,6 @@ const struct kexec_file_ops * const kexec_file_loaders[] = {
 int s390_verify_sig(const char *kernel, unsigned long kernel_len)
 {
 	const unsigned long marker_len = sizeof(MODULE_SIG_STRING) - 1;
-	struct module_signature *ms;
-	unsigned long sig_len;
 	int ret;
 
 	/* Skip signature verification when not secure IPLed. */
@@ -45,25 +43,11 @@ int s390_verify_sig(const char *kernel, unsigned long kernel_len)
 		return -EKEYREJECTED;
 	kernel_len -= marker_len;
 
-	ms = (void *)kernel + kernel_len - sizeof(*ms);
-	ret = mod_check_sig(ms, kernel_len, "kexec");
-	if (ret)
-		return ret;
-
-	sig_len = be32_to_cpu(ms->sig_len);
-	kernel_len -= sizeof(*ms) + sig_len;
-
-	ret = verify_pkcs7_signature(kernel, kernel_len,
-				     kernel + kernel_len, sig_len,
-				     VERIFY_USE_SECONDARY_KEYRING,
-				     VERIFYING_MODULE_SIGNATURE,
-				     NULL, NULL);
+	ret = verify_appended_signature(kernel, &kernel_len, VERIFY_USE_SECONDARY_KEYRING,
+					"kexec_file");
 	if (ret == -ENOKEY && IS_ENABLED(CONFIG_INTEGRITY_PLATFORM_KEYRING))
-		ret = verify_pkcs7_signature(kernel, kernel_len,
-					     kernel + kernel_len, sig_len,
-					     VERIFY_USE_PLATFORM_KEYRING,
-					     VERIFYING_MODULE_SIGNATURE,
-					     NULL, NULL);
+		ret = verify_appended_signature(kernel, &kernel_len, VERIFY_USE_PLATFORM_KEYRING,
+						"kexec_file");
 	return ret;
 }
 #endif /* CONFIG_KEXEC_SIG */
