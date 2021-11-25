@@ -42,17 +42,18 @@ void set_module_sig_enforced(void)
  * @data: The data to be verified
  * @len: Size of @data.
  * @trusted_keys: Keyring to use for verification
- * @what: Informational string for log messages
+ * @purpose: The use to which the key is being put
  */
 int verify_appended_signature(const void *data, unsigned long *len,
-			      struct key *trusted_keys, const char *what)
+			      struct key *trusted_keys,
+			      enum key_being_used_for purpose)
 {
 	const unsigned long markerlen = sizeof(MODULE_SIG_STRING) - 1;
 	const struct module_signature *ms;
 	unsigned long sig_len, modlen = *len;
 	int ret;
 
-	pr_devel("==>%s(,%lu)\n", __func__, modlen);
+	pr_devel("==>%s %s(,%lu)\n", __func__, key_being_used_for[purpose], modlen);
 
 	if (markerlen > modlen)
 		return -ENODATA;
@@ -67,7 +68,7 @@ int verify_appended_signature(const void *data, unsigned long *len,
 
 	ms = data + modlen - sizeof(*ms);
 
-	ret = mod_check_sig(ms, modlen, what);
+	ret = mod_check_sig(ms, modlen, key_being_used_for[purpose]);
 	if (ret)
 		return ret;
 
@@ -77,7 +78,7 @@ int verify_appended_signature(const void *data, unsigned long *len,
 
 	return verify_pkcs7_signature(data, modlen, data + modlen, sig_len,
 				      trusted_keys,
-				      VERIFYING_MODULE_SIGNATURE,
+				      purpose,
 				      NULL, NULL);
 }
 
@@ -94,7 +95,8 @@ int module_sig_check(struct load_info *info, int flags)
 	 */
 	if (!mangled_module) {
 		err = verify_appended_signature(mod, &info->len,
-						VERIFY_USE_SECONDARY_KEYRING, "module");
+						VERIFY_USE_SECONDARY_KEYRING,
+						VERIFYING_MODULE_SIGNATURE);
 		if (!err) {
 			info->sig_ok = true;
 			return 0;

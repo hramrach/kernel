@@ -34,10 +34,10 @@ int s390_verify_sig(const char *kernel, unsigned long kernel_len)
 		return 0;
 
 	ret = verify_appended_signature(kernel, &kernel_len, VERIFY_USE_SECONDARY_KEYRING,
-					"kexec_file");
+					VERIFYING_KEXEC_APPENDED_SIGNATURE);
 	if (ret == -ENOKEY && IS_ENABLED(CONFIG_INTEGRITY_PLATFORM_KEYRING))
 		ret = verify_appended_signature(kernel, &kernel_len, VERIFY_USE_PLATFORM_KEYRING,
-						"kexec_file");
+						VERIFYING_KEXEC_APPENDED_SIGNATURE);
 	return ret;
 }
 #endif /* CONFIG_KEXEC_SIG */

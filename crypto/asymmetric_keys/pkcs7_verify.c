@@ -401,6 +401,7 @@ int pkcs7_verify(struct pkcs7_message *pkcs7,
 	kenter("");
 
 	switch (usage) {
+	case VERIFYING_KEXEC_APPENDED_SIGNATURE:
 	case VERIFYING_MODULE_SIGNATURE:
 		if (pkcs7->data_type != OID_data) {
 			pr_warn("Invalid module sig (not pkcs7-data)\n");
