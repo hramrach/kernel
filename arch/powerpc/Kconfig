@@ -569,6 +569,7 @@ config KEXEC
 config KEXEC_FILE
 	bool "kexec file based system call"
 	select KEXEC_CORE
+	select HAVE_KEXEC_SIG if MODULE_SIG
 	select HAVE_IMA_KEXEC if IMA
 	select KEXEC_ELF
 	depends on PPC64
@@ -580,24 +581,11 @@ config KEXEC_FILE
 	  for kernel and initramfs as opposed to a list of segments as is the
 	  case for the older kexec call.
 
+comment "Module signatures are not enabled"
+	depends on KEXEC_FILE && !MODULE_SIG
+
 config ARCH_HAS_KEXEC_PURGATORY
 	def_bool KEXEC_FILE
-
-config KEXEC_SIG
-	bool "Verify kernel signature during kexec_file_load() syscall"
-	depends on KEXEC_FILE && MODULE_SIG
-	help
-	  This option makes kernel signature verification mandatory for
-	  the kexec_file_load() syscall.
-
-	  In addition to that option, you need to enable signature
-	  verification for the corresponding kernel image type being
-	  loaded in order for this to work.
-
-	  Note: on powerpc IMA_ARCH_POLICY also implements kexec'ed kernel
-	  verification. In addition IMA adds kernel hashes to the measurement
-	  list, extends IMA PCR in the TPM, and implements kernel image
-	  blacklist by hash.
 
 config RELOCATABLE
 	bool "Build a relocatable kernel"

@@ -485,6 +485,7 @@ config KEXEC
 config KEXEC_FILE
 	bool "kexec file based system call"
 	select KEXEC_CORE
+	select HAVE_KEXEC_SIG if MODULE_SIG
 	depends on CRYPTO
 	depends on CRYPTO_SHA256
 	depends on CRYPTO_SHA256_S390
@@ -493,20 +494,12 @@ config KEXEC_FILE
 	  kexec system call this system call takes file descriptors for the
 	  kernel and initramfs as arguments.
 
+comment "Module signatures are not enabled"
+	depends on KEXEC_FILE && !MODULE_SIG
+
 config ARCH_HAS_KEXEC_PURGATORY
 	def_bool y
 	depends on KEXEC_FILE
-
-config KEXEC_SIG
-	bool "Verify kernel signature during kexec_file_load() syscall"
-	depends on KEXEC_FILE && MODULE_SIG
-	help
-	  This option makes kernel signature verification mandatory for
-	  the kexec_file_load() syscall.
-
-	  In addition to that option, you need to enable signature
-	  verification for the corresponding kernel image type being
-	  loaded in order for this to work.
 
 config KERNEL_NOBP
 	def_bool n

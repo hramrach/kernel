@@ -24,6 +24,26 @@ config KEXEC_ELF
 config HAVE_IMA_KEXEC
 	bool
 
+config HAVE_KEXEC_SIG
+	bool
+
+comment "Support for kexec_file() or correct signature format is not enabled"
+	depends on !HAVE_KEXEC_SIG
+
+config KEXEC_SIG
+	bool "Verify kernel signature during kexec_file_load() syscall"
+	depends on HAVE_KEXEC_SIG
+	help
+
+	  This option makes the kexec_file_load() syscall check for a valid
+	  signature of the kernel image.  The image can still be loaded without
+	  a valid signature unless you also enable KEXEC_SIG_FORCE, though if
+	  there's a signature that we can check, then it must be valid.
+
+	  In addition to this option, you need to enable signature
+	  verification for the corresponding kernel image type being
+	  loaded in order for this to work.
+
 config KEXEC_SIG_FORCE
 	bool "Require a valid signature in kexec_file_load() syscall"
 	depends on KEXEC_SIG
