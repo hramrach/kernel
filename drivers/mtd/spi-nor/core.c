@@ -1652,6 +1652,24 @@ static const struct flash_info *spi_nor_match_id(struct spi_nor *nor,
 	return NULL;
 }
 
+static const bool buffer_uniform(const u8 *buffer, size_t length)
+{
+	bool all0;
+	size_t i;
+
+	for (all0 = true, i = 0; i < length; i++)
+		if (buffer[i] != 0) {
+			all0 = false;
+			break;
+		}
+	if (all0)
+		return true;
+	for (i = 0; i < length; i++)
+		if (buffer[i] != 0xff)
+			return false;
+	return true;
+}
+
 static const struct flash_info *spi_nor_detect(struct spi_nor *nor)
 {
 	const struct flash_info *info;
@@ -1666,8 +1684,11 @@ static const struct flash_info *spi_nor_detect(struct spi_nor *nor)
 
 	info = spi_nor_match_id(nor, id);
 	if (!info) {
-		dev_err(nor->dev, "unrecognized JEDEC id bytes: %*ph\n",
-			SPI_NOR_MAX_ID_LEN, id);
+		if (buffer_uniform(id, SPI_NOR_MAX_ID_LEN))
+			dev_info(nor->dev, "No flash memory detected.\n");
+		else
+			dev_err(nor->dev, "unrecognized JEDEC id bytes: %*ph\n",
+				SPI_NOR_MAX_ID_LEN, id);
 		return ERR_PTR(-ENODEV);
 	}
 	return info;
